@@ -49,8 +49,8 @@ FEATURES = [
         ),
         "limitations": (
             "Baselines need ~10+ samples before alerts activate. Software updates, "
-            "CDN changes, and new apps cause false positives. Tune sensitivity in "
-            "settings (planned)."
+            "CDN changes, and new apps cause false positives. Tune sensitivity under "
+            "⚙ Settings (1–5σ threshold)."
         ),
         "status": "active",
     },

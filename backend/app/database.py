@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import aiosqlite
@@ -87,6 +87,9 @@ class Database:
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
+
+            CREATE INDEX IF NOT EXISTS idx_traffic_samples_entity_time
+                ON traffic_samples(entity_type, entity_id, recorded_at);
             """
         )
         await db.commit()
@@ -176,6 +179,80 @@ class Database:
             ) as cursor:
                 rows = await cursor.fetchall()
                 return [dict(row) for row in rows]
+
+    async def get_traffic_history_since(
+        self, entity_type: str, entity_id: str, hours: int = 24
+    ) -> list[dict]:
+        since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        async with self._session() as db:
+            async with db.execute(
+                """
+                SELECT bytes_sent, bytes_recv, recorded_at
+                FROM traffic_samples
+                WHERE entity_type = ? AND entity_id = ? AND recorded_at >= ?
+                ORDER BY recorded_at ASC
+                """,
+                (entity_type, entity_id, since),
+            ) as cursor:
+                rows = await cursor.fetchall()
+                return [dict(row) for row in rows]
+
+    async def get_device_sparklines(
+        self, device_ids: list[str], hours: int = 24, buckets: int = 60
+    ) -> dict[str, list[float]]:
+        """Return downsampled rate sparklines (bytes/s) per device."""
+        result: dict[str, list[float]] = {did: [] for did in device_ids}
+        if not device_ids:
+            return result
+
+        since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        placeholders = ",".join("?" * len(device_ids))
+        async with self._session() as db:
+            async with db.execute(
+                f"""
+                SELECT entity_id, bytes_sent, bytes_recv, recorded_at
+                FROM traffic_samples
+                WHERE entity_type = 'device'
+                  AND entity_id IN ({placeholders})
+                  AND recorded_at >= ?
+                ORDER BY entity_id, recorded_at ASC
+                """,
+                (*device_ids, since),
+            ) as cursor:
+                rows = await cursor.fetchall()
+
+        by_device: dict[str, list[tuple[float, int]]] = {did: [] for did in device_ids}
+        for row in rows:
+            try:
+                ts = datetime.fromisoformat(row["recorded_at"]).timestamp()
+            except ValueError:
+                continue
+            total = row["bytes_sent"] + row["bytes_recv"]
+            by_device.setdefault(row["entity_id"], []).append((ts, total))
+
+        for did, points in by_device.items():
+            rates: list[float] = []
+            for i in range(1, len(points)):
+                dt = points[i][0] - points[i - 1][0]
+                if dt <= 0:
+                    continue
+                delta = points[i][1] - points[i - 1][1]
+                rates.append(max(0.0, delta / dt))
+
+            if not rates:
+                result[did] = [0.0] * buckets
+                continue
+
+            chunk = max(1, len(rates) // buckets)
+            downsampled = [
+                sum(rates[i : i + chunk]) / chunk
+                for i in range(0, len(rates), chunk)
+            ][:buckets]
+            while len(downsampled) < buckets:
+                downsampled.append(0.0)
+            result[did] = downsampled
+
+        return result
 
     async def insert_alert(self, alert: dict) -> None:
         async with self._session() as db:
