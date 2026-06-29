@@ -46,49 +46,51 @@ export default function ProcessTable({ processes }: Props) {
   }
 
   return (
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>▣ Process</th>
-          <th>PID</th>
-          <th>Path</th>
-          <th>↓ Download</th>
-          <th>↑ Upload</th>
-          <th>Conns</th>
-          <th>Remote Hosts</th>
-          <th>Greed</th>
-        </tr>
-      </thead>
-      <tbody>
-        {processes.map((p) => (
-          <tr key={p.pid}>
-            <td>{p.name}</td>
-            <td>{p.pid}</td>
-            <td className="exe-path-cell">
-              {p.exe ? (
-                <>
-                  <span className="exe-path" title={p.exe}>
-                    {p.exe}
-                  </span>
-                  <CopyButton text={p.exe} />
-                </>
-              ) : (
-                <span className="text-dim">—</span>
-              )}
-            </td>
-            <td>{formatRate(p.rate_recv)}</td>
-            <td>{formatRate(p.rate_sent)}</td>
-            <td>{p.connection_count}</td>
-            <td style={{ fontSize: "0.75rem", maxWidth: "200px" }}>
-              {p.remote_hosts.slice(0, 3).join(", ")}
-              {p.remote_hosts.length > 3 && ` +${p.remote_hosts.length - 3}`}
-            </td>
-            <td>
-              <GreedBar score={p.greed_score} />
-            </td>
+    <div className="table-scroll table-scroll-cards">
+      <table className="data-table card-layout">
+        <thead>
+          <tr>
+            <th>▣ Process</th>
+            <th>PID</th>
+            <th>Path</th>
+            <th>↓ Download</th>
+            <th>↑ Upload</th>
+            <th>Conns</th>
+            <th>Remote Hosts</th>
+            <th>Greed</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {processes.map((p) => (
+            <tr key={p.pid}>
+              <td data-label="Process">{p.name}</td>
+              <td data-label="PID">{p.pid}</td>
+              <td className="exe-path-cell" data-label="Path">
+                {p.exe ? (
+                  <>
+                    <span className="exe-path" title={p.exe}>
+                      {p.exe}
+                    </span>
+                    <CopyButton text={p.exe} />
+                  </>
+                ) : (
+                  <span className="text-dim">—</span>
+                )}
+              </td>
+              <td data-label="Download">{formatRate(p.rate_recv)}</td>
+              <td data-label="Upload">{formatRate(p.rate_sent)}</td>
+              <td data-label="Conns">{p.connection_count}</td>
+              <td className="remote-hosts-cell" data-label="Remote Hosts">
+                {p.remote_hosts.slice(0, 3).join(", ")}
+                {p.remote_hosts.length > 3 && ` +${p.remote_hosts.length - 3}`}
+              </td>
+              <td data-label="Greed">
+                <GreedBar score={p.greed_score} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -120,7 +120,7 @@ export default function App() {
       </header>
 
       <div className="app-body">
-        <nav className="sidebar">
+        <nav className="sidebar" aria-label="Main navigation">
           {NAV.map((n) => (
             <button
               key={n.id}

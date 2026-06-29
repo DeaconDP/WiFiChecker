@@ -34,40 +34,42 @@ export default function DeviceTable({ devices }: Props) {
   }
 
   return (
-    <table className="data-table">
-      <thead>
-        <tr>
-          <th>◈ Device</th>
-          <th>IP</th>
-          <th>Vendor</th>
-          <th>↓ Download</th>
-          <th>↑ Upload</th>
-          <th>24h</th>
-          <th>Conns</th>
-          <th>Greed</th>
-        </tr>
-      </thead>
-      <tbody>
-        {devices.map((d) => (
-          <tr key={d.id}>
-            <td>
-              {d.is_local_agent && <span title="This machine">▣ </span>}
-              {d.hostname}
-            </td>
-            <td>{d.ip}</td>
-            <td>{d.vendor}</td>
-            <td>{formatRate(d.rate_recv)}</td>
-            <td>{formatRate(d.rate_sent)}</td>
-            <td>
-              <Sparkline data={sparklines[d.id] ?? []} />
-            </td>
-            <td>{d.connection_count}</td>
-            <td>
-              <GreedBar score={d.greed_score} />
-            </td>
+    <div className="table-scroll table-scroll-cards">
+      <table className="data-table card-layout">
+        <thead>
+          <tr>
+            <th>◈ Device</th>
+            <th>IP</th>
+            <th>Vendor</th>
+            <th>↓ Download</th>
+            <th>↑ Upload</th>
+            <th>24h</th>
+            <th>Conns</th>
+            <th>Greed</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {devices.map((d) => (
+            <tr key={d.id}>
+              <td data-label="Device">
+                {d.is_local_agent && <span title="This machine">▣ </span>}
+                {d.hostname}
+              </td>
+              <td data-label="IP">{d.ip}</td>
+              <td data-label="Vendor">{d.vendor}</td>
+              <td data-label="Download">{formatRate(d.rate_recv)}</td>
+              <td data-label="Upload">{formatRate(d.rate_sent)}</td>
+              <td data-label="24h">
+                <Sparkline data={sparklines[d.id] ?? []} />
+              </td>
+              <td data-label="Conns">{d.connection_count}</td>
+              <td data-label="Greed">
+                <GreedBar score={d.greed_score} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
