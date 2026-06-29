@@ -69,6 +69,8 @@ export interface LatencyProbe {
   url: string
 }
 
+const originProbeUrl = `${import.meta.env.BASE_URL}favicon.svg`
+
 export const LATENCY_PROBES: LatencyProbe[] = [
   {
     id: 'google',
@@ -83,7 +85,7 @@ export const LATENCY_PROBES: LatencyProbe[] = [
   {
     id: 'origin',
     label: 'This app',
-    url: '/favicon.svg',
+    url: originProbeUrl,
   },
 ]
 
