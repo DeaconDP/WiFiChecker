@@ -73,39 +73,41 @@ export function LatencyCard({ running, results, lastRunAt, onRun }: LatencyCardP
             Run a latency suite against Google, Cloudflare, and this app.
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Endpoint</th>
-                <th>Latency</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((result) => {
-                const quality = latencyQuality(result.latencyMs);
-                return (
-                  <tr key={result.probeId}>
-                    <td>{result.label}</td>
-                    <td className={`latency-${quality}`}>
-                      {result.reachable ? formatLatency(result.latencyMs) : "—"}
-                    </td>
-                    <td>
-                      {result.reachable ? (
-                        <span className={`status-badge ${quality === "good" ? "active" : quality === "fair" ? "partial" : "planned"}`}>
-                          {quality}
-                        </span>
-                      ) : (
-                        <span className="status-badge planned" title={result.error}>
-                          Unreachable
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Latency</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((result) => {
+                  const quality = latencyQuality(result.latencyMs);
+                  return (
+                    <tr key={result.probeId}>
+                      <td>{result.label}</td>
+                      <td className={`latency-${quality}`}>
+                        {result.reachable ? formatLatency(result.latencyMs) : "—"}
+                      </td>
+                      <td>
+                        {result.reachable ? (
+                          <span className={`status-badge ${quality === "good" ? "active" : quality === "fair" ? "partial" : "planned"}`}>
+                            {quality}
+                          </span>
+                        ) : (
+                          <span className="status-badge planned" title={result.error}>
+                            Unreachable
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
         {lastRunAt && (
           <p className="health-hint">Last run {lastRunAt.toLocaleTimeString()}</p>
