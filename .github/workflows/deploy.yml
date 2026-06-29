@@ -30,10 +30,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Build for GitHub Pages
         run: npm run build
         env:
-          VITE_BASE_PATH: /WiFiChecker/
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+
+      - name: Verify Pages artifact
+        run: |
+          test -f dist/index.html
+          test -f dist/.nojekyll
+          grep -q "/${{ github.event.repository.name }}/" dist/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
