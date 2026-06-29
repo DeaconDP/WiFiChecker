@@ -1,20 +1,34 @@
 import { useEffect, useState } from "react";
 import type { FeatureInfo, LivePayload } from "./types";
 import { connectWebSocket, fetchFeatures } from "./api";
+import { HealthSummary } from "./components/HealthCards";
 import SummaryCards from "./components/SummaryCards";
 import DeviceTable from "./components/DeviceTable";
 import ProcessTable from "./components/ProcessTable";
 import AlertList from "./components/AlertList";
 import FeatureGrid from "./components/FeatureGrid";
 import RoadmapPage from "./pages/RoadmapPage";
+import SettingsPage from "./pages/SettingsPage";
+import HealthPage from "./pages/HealthPage";
+import { useConnectivity } from "./hooks/useConnectivity";
 
-type Page = "dashboard" | "devices" | "processes" | "alerts" | "features" | "roadmap";
+type Page =
+  | "dashboard"
+  | "health"
+  | "devices"
+  | "processes"
+  | "alerts"
+  | "features"
+  | "roadmap"
+  | "settings";
 
 const NAV: { id: Page; symbol: string; label: string }[] = [
   { id: "dashboard", symbol: "◈", label: "Dashboard" },
+  { id: "health", symbol: "▲", label: "Health" },
   { id: "devices", symbol: "◎", label: "Devices" },
   { id: "processes", symbol: "▣", label: "Processes" },
   { id: "alerts", symbol: "△", label: "Alerts" },
+  { id: "settings", symbol: "⚙", label: "Settings" },
   { id: "features", symbol: "◇", label: "Features" },
   { id: "roadmap", symbol: "▤", label: "Roadmap" },
 ];
@@ -23,7 +37,12 @@ const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
   dashboard: {
     title: "◈ NETWORK OVERVIEW",
     subtitle:
-      "Live snapshot of your LAN — device bandwidth, process activity, and active alerts.",
+      "Unified snapshot — client connection health, LAN bandwidth, process activity, and active alerts.",
+  },
+  health: {
+    title: "▲ CLIENT HEALTH",
+    subtitle:
+      "Connectivity, link quality, and latency probes. Works in the browser without a backend — installable as a PWA.",
   },
   devices: {
     title: "◎ DEVICE MONITOR",
@@ -33,7 +52,7 @@ const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
   processes: {
     title: "▣ PROCESS MONITOR",
     subtitle:
-      "Applications on this machine using network I/O. Hover for executable path. Requires local agent.",
+      "Applications on this machine using network I/O. Executable paths are shown with a copy button. Requires local agent.",
   },
   alerts: {
     title: "△ ALERT FEED",
@@ -50,6 +69,11 @@ const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
     subtitle:
       "Development epics, suggestions, and planned capabilities. This file is the living product backlog.",
   },
+  settings: {
+    title: "⚙ SETTINGS",
+    subtitle:
+      "Tune alert sensitivity and view runtime configuration. Changes persist across restarts.",
+  },
 };
 
 export default function App() {
@@ -58,6 +82,7 @@ export default function App() {
   const [data, setData] = useState<LivePayload | null>(null);
   const [features, setFeatures] = useState<FeatureInfo[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const connectivity = useConnectivity();
 
   useEffect(() => {
     fetchFeatures().then(setFeatures).catch(() => {});
@@ -82,9 +107,15 @@ export default function App() {
           </div>
           <div className="app-tagline">Network Traffic Intelligence</div>
         </div>
-        <div className="status-pill">
-          <span className={`status-dot ${connected ? "" : "offline"}`} />
-          {connected ? "LIVE" : "RECONNECTING"}
+        <div className="header-status">
+          <div className="status-pill">
+            <span className={`status-dot ${connectivity.online ? "" : "offline"}`} />
+            {connectivity.online ? "CLIENT" : "OFFLINE"}
+          </div>
+          <div className="status-pill">
+            <span className={`status-dot ${connected ? "" : "offline"}`} />
+            {connected ? "LAN LIVE" : "LAN OFF"}
+          </div>
         </div>
       </header>
 
@@ -108,28 +139,52 @@ export default function App() {
 
           {page === "dashboard" && (
             <>
-              <SummaryCards summary={data?.summary ?? null} />
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="panel-title">◎ TOP DEVICES BY GREED</span>
+              <HealthSummary connectivity={connectivity} backendLive={connected} />
+              {connected ? (
+                <>
+                  <SummaryCards summary={data?.summary ?? null} />
+                  <div className="panel">
+                    <div className="panel-header">
+                      <span className="panel-title">◎ TOP DEVICES BY GREED</span>
+                    </div>
+                    <div className="panel-body">
+                      <DeviceTable devices={(data?.devices ?? []).slice(0, 5)} />
+                    </div>
+                  </div>
+                  <div className="panel">
+                    <div className="panel-header">
+                      <span className="panel-title">△ RECENT ALERTS</span>
+                    </div>
+                    <div className="panel-body" style={{ padding: "1rem" }}>
+                      <AlertList
+                        alerts={(data?.alerts ?? []).slice(0, 3)}
+                        onAcknowledge={() => setRefreshKey((k) => k + 1)}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="panel insight-panel">
+                  <div className="panel-header">
+                    <span className="panel-title">◈ START LAN MONITORING</span>
+                  </div>
+                  <div className="panel-body">
+                    <p className="insight-text">
+                      Client health is active. Start the backend for greedy device detection,
+                      process monitoring, and anomaly alerts:
+                    </p>
+                    <pre className="insight-code">docker compose up</pre>
+                    <p className="insight-text">
+                      Or open the <button className="link-btn" onClick={() => setPage("health")}>▲ Health</button> page
+                      for full latency testing and PWA install.
+                    </p>
+                  </div>
                 </div>
-                <div className="panel-body">
-                  <DeviceTable devices={(data?.devices ?? []).slice(0, 5)} />
-                </div>
-              </div>
-              <div className="panel">
-                <div className="panel-header">
-                  <span className="panel-title">△ RECENT ALERTS</span>
-                </div>
-                <div className="panel-body" style={{ padding: "1rem" }}>
-                  <AlertList
-                    alerts={(data?.alerts ?? []).slice(0, 3)}
-                    onAcknowledge={() => setRefreshKey((k) => k + 1)}
-                  />
-                </div>
-              </div>
+              )}
             </>
           )}
+
+          {page === "health" && <HealthPage backendLive={connected} />}
 
           {page === "devices" && (
             <div className="panel">
@@ -165,6 +220,8 @@ export default function App() {
           )}
 
           {page === "features" && <FeatureGrid features={features} />}
+
+          {page === "settings" && <SettingsPage />}
 
           {page === "roadmap" && <RoadmapPage />}
         </main>

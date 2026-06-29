@@ -591,6 +591,249 @@ body::after {
   margin-bottom: 0.75rem;
 }
 
+/* ── Sparkline ── */
+
+.sparkline {
+  display: block;
+}
+
+/* ── Process path + copy ── */
+
+.exe-path-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 280px;
+}
+
+.exe-path {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--neon-cyan);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.35rem;
+  line-height: 1;
+}
+
+.copy-btn:hover {
+  border-color: var(--neon-cyan);
+}
+
+.text-dim {
+  color: var(--text-dim);
+}
+
+/* ── Settings ── */
+
+.settings-body {
+  padding: 1.5rem;
+  max-width: 480px;
+}
+
+.settings-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.settings-slider {
+  width: 100%;
+  accent-color: var(--neon-cyan);
+}
+
+.settings-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin: 0.25rem 0 1rem;
+}
+
+.settings-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.settings-desc code {
+  color: var(--neon-cyan);
+  font-size: 0.75rem;
+}
+
+.btn-primary {
+  background: transparent;
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: var(--glow-cyan);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.settings-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.settings-meta dt {
+  color: var(--text-dim);
+}
+
+/* ── Health / client probes ── */
+
+.header-status {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.health-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.health-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.health-metric-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.health-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 0 1.25rem 1rem;
+  line-height: 1.5;
+}
+
+.health-summary {
+  margin-bottom: 1.5rem;
+}
+
+.latency-good {
+  color: var(--neon-green);
+}
+
+.latency-fair {
+  color: var(--neon-yellow);
+}
+
+.latency-poor {
+  color: var(--neon-orange);
+}
+
+.latency-unknown {
+  color: var(--text-dim);
+}
+
+.install-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--bg-card);
+  border: 1px solid var(--neon-cyan);
+  box-shadow: var(--glow-cyan);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.install-banner strong {
+  color: var(--neon-cyan);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.install-banner p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.install-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  border-color: var(--text-secondary);
+}
+
+.insight-panel {
+  margin-top: 1.5rem;
+}
+
+.insight-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.insight-text code {
+  color: var(--neon-cyan);
+}
+
+.insight-code {
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 768px) {

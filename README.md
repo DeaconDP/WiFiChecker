@@ -1,113 +1,65 @@
-# WiFiChecker / Spectra
+# Spectra
 
-This repository contains two related network tools:
-
-| App | What it does | Run from |
-|-----|--------------|----------|
-| **WiFiChecker** | Browser PWA for connectivity, link info, and latency tests | repo root |
-| **Spectra** | Full-stack Wi-Fi traffic analyzer — greedy devices, processes, anomalies | `backend/` + `frontend/` |
-
----
-
-## WiFiChecker (PWA)
-
-Cross-platform **Progressive Web App** for network health checks — connectivity status, browser-reported connection info, and latency/reachability tests. Installable on phone, tablet, and desktop.
-
-### Features (v0.1)
-
-- Online/offline status with live updates
-- Connection type and Network Information API metrics (where the browser exposes them)
-- Latency suite against Google, Cloudflare, and the app origin
-- Installable PWA shell (manifest + service worker)
-- Mobile-first responsive UI
-
-### Browser limits
-
-Web apps cannot access Wi‑Fi SSID, signal strength, or scan nearby networks. WiFiChecker focuses on what browsers *can* measure: connectivity, estimated link quality, and round-trip latency.
-
-### Quick start
-
-```bash
-npm install
-npm run dev
-```
-
-Open the printed local URL. For phone testing, deploy to Vercel/Netlify or tunnel the dev server (e.g. Cloudflare Tunnel, ngrok) and open the public URL on your device. Use **Add to Home Screen** / **Install app** to install the PWA.
-
-### Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | Production build to `dist/` |
-| `npm run preview` | Serve the production build locally |
-| `npm run preview:pages` | Build and preview with the GitHub Pages base path (`/WiFiChecker/`) |
-
-### Deploy (GitHub Pages)
-
-This repo includes a [GitHub Actions workflow](.github/workflows/deploy.yml) that builds the **WiFiChecker PWA** and pushes it to the `gh-pages` branch on every push to `main`.
-
-**One-time setup** (required before the site is live):
-
-1. Open [Settings → Pages](https://github.com/DeaconDP/WiFiChecker/settings/pages).
-2. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
-3. Choose branch **`gh-pages`**, folder **`/ (root)`**, then **Save**.
-
-After the next workflow run (or a manual run from the **Actions** tab), the app is available at **https://deacondp.github.io/WiFiChecker/**.
-
-Local production preview with the same base path as GitHub Pages:
-
-```bash
-npm run preview:pages
-```
-
-Then open **http://localhost:4173/WiFiChecker/** (paths match the live site).
-
----
-
-## Spectra (Traffic Analyzer)
-
-**Network Traffic Intelligence** — identify greedy devices, greedy processes, unusual traffic, and threat signals on your Wi-Fi network.
+**Network Traffic Intelligence** — one app for client health checks and full LAN analysis.
 
 ```
    ◈ SPECTRA ◈
-  ◎ ▣ △ ◉ ◇
+  ▲ ◎ ▣ △ ◉
 ```
 
-### What it does
+| Mode | What it does | Requires backend |
+|------|--------------|------------------|
+| **▲ Health** | Connectivity, link quality, latency probes, PWA install | No |
+| **◈ Dashboard** | Greedy devices, process monitoring, anomaly alerts | Yes |
+
+---
+
+## Quick start
+
+**One command (Docker):**
+
+```bash
+docker compose up --build
+```
+
+Open **http://localhost:5173** — full LAN monitoring with live dashboard.
+
+**Local development:**
+
+```bash
+npm run install:all
+
+# Terminal 1 — backend API (port 8000)
+npm run dev:backend
+
+# Terminal 2 — unified UI (port 5173)
+npm run dev
+```
+
+The **▲ Health** page works without the backend — useful for quick connectivity checks or GitHub Pages.
+
+---
+
+## Features
 
 | Symbol | Feature | Status |
 |--------|---------|--------|
+| ▲ | **Client health** — connectivity, latency, PWA install | Active |
 | ◈ | **Greedy device detection** — which devices hog bandwidth | Active |
 | ▣ | **Greedy process detection** — which apps on this machine are active | Active |
 | △ | **Anomaly alerts** — traffic spikes, new destinations, upload patterns | Active |
 | ◉ | **Threat signals** — exfiltration heuristics, suspicious uploads | Partial |
-| ◎ | **Device inventory** — live LAN device registry | Active |
+| ◎ | **Device inventory** — live LAN device registry with 24h sparklines | Active |
+| ⚙ | **Settings** — configurable alert sensitivity (σ threshold) | Active |
 | ▤ | **DNS logging** — domain-level visibility | Planned |
-| ▲ | **Rogue AP detection** — evil twin / deauth | Planned |
 
-Every feature is explained in the app under **◇ Features**, with limitations stated plainly.
+Every feature is explained in-app under **◇ Features**, with limitations stated plainly.
 
-### Quick start
+---
 
-**Prerequisites:** Python 3.11+, Node.js 18+
+## Configuration
 
-```bash
-# Install Spectra dependencies
-npm run spectra:install
-
-# Terminal 1 — backend API (port 8000)
-npm run spectra:backend
-
-# Terminal 2 — cyberpunk dashboard (port 5173)
-npm run spectra:frontend
-```
-
-Open **http://localhost:5173** (proxies API requests to the backend).
-
-### Configuration
-
-Environment variables (prefix `SPECTRA_`):
+Copy `.env.example` to `.env` or set environment variables (prefix `SPECTRA_`):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -116,28 +68,60 @@ Environment variables (prefix `SPECTRA_`):
 | `SPECTRA_BASELINE_DAYS` | `7` | Baseline learning window |
 | `SPECTRA_DATABASE_PATH` | `data/spectra.db` | SQLite database path |
 
-### Architecture
+---
+
+## Architecture
 
 ```
-┌─────────────┐     WebSocket      ┌──────────────┐
-│  React UI   │◄──────────────────►│  FastAPI     │
-│  (cyberpunk)│     REST API       │  Backend     │
-└─────────────┘                    └──────┬───────┘
-                                          │
-                              ┌───────────┼───────────┐
-                              ▼           ▼           ▼
-                        DeviceMonitor ProcessMonitor AnomalyDetector
-                        (ARP scan)    (psutil)       (z-score)
+┌─────────────────────────────────────────┐
+│           Unified React UI              │
+│  ▲ Health (browser-only, PWA)           │
+│  ◈ Dashboard / Devices / Alerts (LAN)   │
+└──────────────┬──────────────────────────┘
+               │ REST + WebSocket
+        ┌──────▼───────┐
+        │   FastAPI    │
+        │   Backend    │
+        └──────┬───────┘
+               │
+   ┌───────────┼───────────┐
+   ▼           ▼           ▼
+DeviceMonitor ProcessMonitor AnomalyDetector
+(ARP scan)    (psutil)       (z-score)
 ```
 
-### Roadmap
+---
 
-See [docs/TODO.md](docs/TODO.md) for epics, suggestions, and the living product backlog. The roadmap is also rendered in-app under **▤ Roadmap**.
+## Deploy (GitHub Pages)
 
-### Limitations (honest)
+The unified app builds to a static PWA. The **▲ Health** page works fully offline; LAN features need a local or remote Spectra backend.
+
+**One-time setup:**
+
+1. Open [Settings → Pages](https://github.com/DeaconDP/WiFiChecker/settings/pages).
+2. Set **Source** to **Deploy from a branch** → **`gh-pages`** → **`/ (root)`**.
+
+Live at **https://deacondp.github.io/WiFiChecker/** after the next push to `main`.
+
+Local preview with the same base path:
+
+```bash
+npm run preview:pages
+```
+
+---
+
+## Roadmap
+
+See [docs/TODO.md](docs/TODO.md) for epics, suggestions, and the living product backlog. Also rendered in-app under **▤ Roadmap**.
+
+---
+
+## Limitations (honest)
 
 - Per-device bandwidth on consumer setups is **approximate** without a dedicated gateway
 - **HTTPS content is not decrypted** — analysis uses metadata only
+- Browser health checks cannot read Wi‑Fi SSID or signal strength
 - Per-app visibility on phones requires platform-specific agents (planned)
 - Not a replacement for antivirus — behavioral anomaly detection, not signature scanning
 
