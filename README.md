@@ -1,4 +1,67 @@
-# Spectra
+# WiFiChecker / Spectra
+
+This repository contains two related network tools:
+
+| App | What it does | Run from |
+|-----|--------------|----------|
+| **WiFiChecker** | Browser PWA for connectivity, link info, and latency tests | repo root |
+| **Spectra** | Full-stack Wi-Fi traffic analyzer — greedy devices, processes, anomalies | `backend/` + `frontend/` |
+
+---
+
+## WiFiChecker (PWA)
+
+Cross-platform **Progressive Web App** for network health checks — connectivity status, browser-reported connection info, and latency/reachability tests. Installable on phone, tablet, and desktop.
+
+### Features (v0.1)
+
+- Online/offline status with live updates
+- Connection type and Network Information API metrics (where the browser exposes them)
+- Latency suite against Google, Cloudflare, and the app origin
+- Installable PWA shell (manifest + service worker)
+- Mobile-first responsive UI
+
+### Browser limits
+
+Web apps cannot access Wi‑Fi SSID, signal strength, or scan nearby networks. WiFiChecker focuses on what browsers *can* measure: connectivity, estimated link quality, and round-trip latency.
+
+### Quick start
+
+```bash
+npm install
+npm run dev
+```
+
+Open the printed local URL. For phone testing, deploy to Vercel/Netlify or tunnel the dev server (e.g. Cloudflare Tunnel, ngrok) and open the public URL on your device. Use **Add to Home Screen** / **Install app** to install the PWA.
+
+### Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Production build to `dist/` |
+| `npm run preview` | Serve the production build locally |
+
+### Deploy (GitHub Pages)
+
+This repo includes a [GitHub Actions workflow](.github/workflows/deploy.yml) that builds and publishes the **WiFiChecker PWA** to Pages on every push to `main`.
+
+1. In the repo on GitHub, open **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+3. Merge to `main` (or run the workflow manually from the **Actions** tab).
+
+The app will be available at **https://deacondp.github.io/WiFiChecker/**.
+
+Local production preview with the same base path:
+
+```bash
+VITE_BASE_PATH=/WiFiChecker/ npm run build
+npm run preview
+```
+
+---
+
+## Spectra (Traffic Analyzer)
 
 **Network Traffic Intelligence** — identify greedy devices, greedy processes, unusual traffic, and threat signals on your Wi-Fi network.
 
@@ -7,7 +70,7 @@
   ◎ ▣ △ ◉ ◇
 ```
 
-## What it does
+### What it does
 
 | Symbol | Feature | Status |
 |--------|---------|--------|
@@ -21,32 +84,22 @@
 
 Every feature is explained in the app under **◇ Features**, with limitations stated plainly.
 
-## Quick start
+### Quick start
 
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+
-
-### Backend
+**Prerequisites:** Python 3.11+, Node.js 18+
 
 ```bash
-cd backend
-pip install -r requirements.txt
-python3 run.py
+# Install Spectra dependencies
+npm run spectra:install
+
+# Terminal 1 — backend API (port 8000)
+npm run spectra:backend
+
+# Terminal 2 — cyberpunk dashboard (port 5173)
+npm run spectra:frontend
 ```
 
-API runs at `http://localhost:8000`. Docs at `http://localhost:8000/docs`.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-UI runs at `http://localhost:5173` (proxies API requests to backend).
+Open **http://localhost:5173** (proxies API requests to the backend).
 
 ### Configuration
 
@@ -59,7 +112,7 @@ Environment variables (prefix `SPECTRA_`):
 | `SPECTRA_BASELINE_DAYS` | `7` | Baseline learning window |
 | `SPECTRA_DATABASE_PATH` | `data/spectra.db` | SQLite database path |
 
-## Architecture
+### Architecture
 
 ```
 ┌─────────────┐     WebSocket      ┌──────────────┐
@@ -73,16 +126,18 @@ Environment variables (prefix `SPECTRA_`):
                         (ARP scan)    (psutil)       (z-score)
 ```
 
-## Roadmap
+### Roadmap
 
 See [docs/TODO.md](docs/TODO.md) for epics, suggestions, and the living product backlog. The roadmap is also rendered in-app under **▤ Roadmap**.
 
-## Limitations (honest)
+### Limitations (honest)
 
 - Per-device bandwidth on consumer setups is **approximate** without a dedicated gateway
 - **HTTPS content is not decrypted** — analysis uses metadata only
 - Per-app visibility on phones requires platform-specific agents (planned)
 - Not a replacement for antivirus — behavioral anomaly detection, not signature scanning
+
+---
 
 ## License
 

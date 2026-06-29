@@ -1,10 +1,18 @@
+# Spectra backend
 data/
 *.db
 __pycache__/
 *.pyc
 .env
-node_modules/
-dist/
 .venv/
 venv/
+
+# Node / frontend (both apps)
+node_modules/
+dist/
+dist-ssr/
+*.local
 *.tsbuildinfo
+
+# OS
+.DS_Store
