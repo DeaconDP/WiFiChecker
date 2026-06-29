@@ -45,13 +45,15 @@ Open the printed local URL. For phone testing, deploy to Vercel/Netlify or tunne
 
 ### Deploy (GitHub Pages)
 
-This repo includes a [GitHub Actions workflow](.github/workflows/deploy.yml) that builds and publishes the **WiFiChecker PWA** to Pages on every push to `main`.
+This repo includes a [GitHub Actions workflow](.github/workflows/deploy.yml) that builds the **WiFiChecker PWA** and pushes it to the `gh-pages` branch on every push to `main`.
 
-1. In the repo on GitHub, open **Settings → Pages**.
-2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
-3. Merge to `main` (or run the workflow manually from the **Actions** tab).
+**One-time setup** (required before the site is live):
 
-The app will be available at **https://deacondp.github.io/WiFiChecker/**.
+1. Open [Settings → Pages](https://github.com/DeaconDP/WiFiChecker/settings/pages).
+2. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
+3. Choose branch **`gh-pages`**, folder **`/ (root)`**, then **Save**.
+
+After the next workflow run (or a manual run from the **Actions** tab), the app is available at **https://deacondp.github.io/WiFiChecker/**.
 
 Local production preview with the same base path as GitHub Pages:
 
@@ -60,8 +62,6 @@ npm run preview:pages
 ```
 
 Then open **http://localhost:4173/WiFiChecker/** (paths match the live site).
-
-**First-time setup:** If deploy fails with *"Ensure GitHub Pages has been enabled"*, open [Settings → Pages](https://github.com/DeaconDP/WiFiChecker/settings/pages), set **Source** to **GitHub Actions**, then re-run the [Deploy workflow](https://github.com/DeaconDP/WiFiChecker/actions/workflows/deploy.yml) from the Actions tab.
 
 ---
 
