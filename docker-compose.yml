@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - spectra-data:/data
+    environment:
+      SPECTRA_DATABASE_PATH: /data/spectra.db
+      SPECTRA_POLL_INTERVAL_SECONDS: ${SPECTRA_POLL_INTERVAL_SECONDS:-2.0}
+      SPECTRA_ANOMALY_SIGMA_THRESHOLD: ${SPECTRA_ANOMALY_SIGMA_THRESHOLD:-2.5}
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  spectra-data:

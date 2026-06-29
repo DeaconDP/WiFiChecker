@@ -2,8 +2,38 @@ import type { FeatureInfo, LivePayload } from "./types";
 
 const API = "/api";
 
+export interface AppSettings {
+  poll_interval_seconds: number;
+  anomaly_sigma_threshold: number;
+  baseline_days: number;
+  database_path: string;
+}
+
 export async function fetchFeatures(): Promise<FeatureInfo[]> {
   const res = await fetch(`${API}/features`);
+  return res.json();
+}
+
+export async function fetchSettings(): Promise<AppSettings> {
+  const res = await fetch(`${API}/settings`);
+  return res.json();
+}
+
+export async function updateSettings(
+  updates: Partial<Pick<AppSettings, "anomaly_sigma_threshold">>
+): Promise<AppSettings> {
+  const res = await fetch(`${API}/settings`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  return res.json();
+}
+
+export async function fetchDeviceSparklines(
+  hours = 24
+): Promise<Record<string, number[]>> {
+  const res = await fetch(`${API}/devices/sparklines?hours=${hours}`);
   return res.json();
 }
 

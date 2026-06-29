@@ -101,6 +101,16 @@ npm run spectra:frontend
 
 Open **http://localhost:5173** (proxies API requests to the backend).
 
+### Docker (one command)
+
+```bash
+docker compose up --build
+```
+
+Open **http://localhost:5173** — frontend proxies `/api` to the backend. Data persists in the `spectra-data` volume.
+
+Copy `.env.example` to `.env` to override defaults before starting.
+
 ### Configuration
 
 Environment variables (prefix `SPECTRA_`):

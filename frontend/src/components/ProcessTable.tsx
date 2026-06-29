@@ -1,9 +1,35 @@
+import { useState } from "react";
 import type { ProcessTraffic } from "../types";
 import { formatRate } from "../api";
 import GreedBar from "./GreedBar";
 
 interface Props {
   processes: ProcessTraffic[];
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className="copy-btn"
+      onClick={handleCopy}
+      title="Copy path"
+    >
+      {copied ? "✓" : "⧉"}
+    </button>
+  );
 }
 
 export default function ProcessTable({ processes }: Props) {
@@ -25,6 +51,7 @@ export default function ProcessTable({ processes }: Props) {
         <tr>
           <th>▣ Process</th>
           <th>PID</th>
+          <th>Path</th>
           <th>↓ Download</th>
           <th>↑ Upload</th>
           <th>Conns</th>
@@ -35,8 +62,20 @@ export default function ProcessTable({ processes }: Props) {
       <tbody>
         {processes.map((p) => (
           <tr key={p.pid}>
-            <td title={p.exe ?? undefined}>{p.name}</td>
+            <td>{p.name}</td>
             <td>{p.pid}</td>
+            <td className="exe-path-cell">
+              {p.exe ? (
+                <>
+                  <span className="exe-path" title={p.exe}>
+                    {p.exe}
+                  </span>
+                  <CopyButton text={p.exe} />
+                </>
+              ) : (
+                <span className="text-dim">—</span>
+              )}
+            </td>
             <td>{formatRate(p.rate_recv)}</td>
             <td>{formatRate(p.rate_sent)}</td>
             <td>{p.connection_count}</td>

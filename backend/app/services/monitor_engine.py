@@ -20,6 +20,8 @@ class MonitorEngine:
         self.anomaly = AnomalyDetector()
         self._task: asyncio.Task | None = None
         self._subscribers: list[asyncio.Queue] = []
+        self._seen_device_ids: set[str] = set()
+        self._first_tick_done = False
         self._latest: dict = {
             "devices": [],
             "processes": [],
@@ -33,7 +35,31 @@ class MonitorEngine:
             await self.db.set_meta(
                 "monitoring_since", datetime.now(timezone.utc).isoformat()
             )
+        stored_sigma = await self.db.get_meta("anomaly_sigma_threshold")
+        if stored_sigma:
+            try:
+                self.anomaly.sigma_threshold = float(stored_sigma)
+            except ValueError:
+                pass
+        existing = await self.db.list_devices()
+        self._seen_device_ids = {d["id"] for d in existing}
         self._task = asyncio.create_task(self._poll_loop())
+
+    async def get_settings(self) -> dict:
+        return {
+            "poll_interval_seconds": settings.poll_interval_seconds,
+            "anomaly_sigma_threshold": self.anomaly.sigma_threshold,
+            "baseline_days": settings.baseline_days,
+            "database_path": settings.database_path,
+        }
+
+    async def update_settings(self, updates: dict) -> dict:
+        if "anomaly_sigma_threshold" in updates:
+            value = float(updates["anomaly_sigma_threshold"])
+            value = max(1.0, min(5.0, value))
+            self.anomaly.sigma_threshold = value
+            await self.db.set_meta("anomaly_sigma_threshold", str(value))
+        return await self.get_settings()
 
     async def stop(self) -> None:
         if self._task:
@@ -77,10 +103,18 @@ class MonitorEngine:
                 "device", d["id"], d["bytes_sent"], d["bytes_recv"]
             )
 
+        new_device_alerts: list[dict] = []
+        if self._first_tick_done:
+            new_device_alerts = self.anomaly.check_new_devices(
+                device_list, self._seen_device_ids
+            )
+        for d in device_list:
+            self._seen_device_ids.add(d["id"])
+
         device_alerts = self.anomaly.check_device_anomalies(device_list)
         process_alerts = self.anomaly.check_process_anomalies(process_list)
 
-        for alert in device_alerts + process_alerts:
+        for alert in new_device_alerts + device_alerts + process_alerts:
             await self.db.insert_alert(alert)
 
         alerts = await self.db.list_alerts(50)
@@ -108,6 +142,7 @@ class MonitorEngine:
         }
 
         await self._broadcast(self._latest)
+        self._first_tick_done = True
 
     def snapshot(self) -> dict:
         return self._latest
