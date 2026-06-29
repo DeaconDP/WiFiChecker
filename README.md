@@ -33,6 +33,25 @@ Open the printed local URL. For phone testing, deploy to Vercel/Netlify or tunne
 
 ## Deploy
 
+### GitHub Pages
+
+This repo includes a [GitHub Actions workflow](.github/workflows/deploy.yml) that builds and publishes to Pages on every push to `main`.
+
+1. In the repo on GitHub, open **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+3. Merge to `main` (or run the workflow manually from the **Actions** tab).
+
+The app will be available at **https://deacondp.github.io/WiFiChecker/**.
+
+Local production preview with the same base path:
+
+```bash
+VITE_BASE_PATH=/WiFiChecker/ npm run build
+npm run preview
+```
+
+### Other static hosts
+
 Any static host works. Example with Vercel:
 
 ```bash
