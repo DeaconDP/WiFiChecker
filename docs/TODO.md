@@ -1,6 +1,22 @@
 # Spectra — Product Roadmap & Epics
 
-> Living backlog for Wi-Fi traffic analysis: greedy devices, greedy processes, anomaly detection, and threat signals.
+> Living backlog for network health and Wi-Fi traffic analysis: client probes, greedy devices, greedy processes, anomaly detection, and threat signals.
+
+---
+
+## Epic 0: Unified App ◈
+
+**Goal:** One simple app for maximum insight — client health + LAN intelligence.
+
+| Status | Item | Notes |
+|--------|------|-------|
+| ✅ Done | Merge WiFiChecker into Spectra UI | ▲ Health page — connectivity + latency |
+| ✅ Done | Unified dashboard | Client + LAN status on one screen |
+| ✅ Done | Single Docker Compose launch | `docker compose up` |
+| ✅ Done | PWA install for health checks | Works on GitHub Pages without backend |
+| ✅ Done | Consolidated repo structure | One frontend, one backend, root orchestrator |
+| 🔲 Todo | URL routing (deep links) | `/health`, `/devices`, etc. |
+| 🔲 Todo | Mobile bottom nav | Swipeable cards on small screens |
 
 ---
 
@@ -15,6 +31,8 @@
 | ✅ Done | Per-process socket attribution | psutil `net_connections` + IO counters |
 | ✅ Done | WebSocket live dashboard | 2s poll interval, push updates |
 | ✅ Done | SQLite traffic history | Samples per device/process |
+| ✅ Done | 24h traffic sparklines | Per-device from `traffic_samples` |
+| ✅ Done | New device joined alerts | Unknown MAC detection |
 | 🔲 Todo | Accurate per-device metering via gateway | Requires iptables/nftables counters on bridge |
 | 🔲 Todo | IPv6 device discovery | `ip -6 neigh` integration |
 | 🔲 Todo | Device naming persistence | Remember user-assigned labels |
@@ -36,9 +54,9 @@
 | ✅ Done | Greedy process alerts | Per-PID rate anomaly |
 | ✅ Done | Upload-heavy pattern detection | Asymmetric upload/download ratio |
 | ✅ Done | New destination alerts | First-seen remote hosts per process |
+| ✅ Done | Configurable sensitivity slider | Settings page — σ threshold |
 | 🔲 Todo | Time-of-day baselines | Different thresholds for 3am vs 3pm |
 | 🔲 Todo | Beaconing detection | Fixed-interval connection regularity |
-| ✅ Done | Configurable sensitivity slider | Settings page (1–5σ), persisted in SQLite |
 | 🔲 Todo | Alert suppression rules | "Ignore Windows Update" patterns |
 
 ### Suggestions
@@ -76,6 +94,7 @@
 
 | Status | Item | Notes |
 |--------|------|-------|
+| ✅ Done | Docker Compose full stack | Backend + frontend containers |
 | 🔲 Todo | Docker Compose gateway mode | Bridge + dnsmasq + Spectra |
 | 🔲 Todo | OpenWrt package | opkg install spectra |
 | 🔲 Todo | Raspberry Pi image | Flash-and-go appliance |
@@ -121,6 +140,8 @@
 | ✅ Done | Feature guide page | How it works + limitations per feature |
 | ✅ Done | Alert explanations | "Why this matters" on every alert |
 | ✅ Done | Roadmap page | This file, rendered in-app |
+| ✅ Done | Client health page | Connectivity + latency probes (PWA) |
+| ✅ Done | Unified dashboard | Client + LAN insight on one screen |
 | 🔲 Todo | Traffic flow visualization | D3 chord diagram device ↔ destination |
 | 🔲 Todo | Sound alerts for critical | Optional retro synth beep |
 | 🔲 Todo | CRT shader toggle | Optional post-processing effect |
@@ -142,8 +163,9 @@
 | ✅ Done | FastAPI backend | REST + WebSocket |
 | ✅ Done | React + Vite frontend | Proxy to backend in dev |
 | ✅ Done | SQLite persistence | Traffic samples, alerts, devices |
-| ✅ Done | Environment-based config | `.env` + `.env.example` for thresholds, intervals |
-| ✅ Done | Docker Compose (full stack) | `docker compose up` — backend + frontend |
+| ✅ Done | Environment-based config | `.env` + `.env.example` |
+| ✅ Done | Docker Compose (full stack) | `docker compose up` |
+| ✅ Done | Settings API + UI | PATCH `/api/settings` |
 | 🔲 Todo | Authentication | Basic auth or OAuth for remote access |
 | 🔲 Todo | Data retention policy | Auto-prune samples older than N days |
 | 🔲 Todo | Health check + metrics | Prometheus `/metrics` endpoint |
@@ -155,13 +177,14 @@
 
 ---
 
-## Quick Wins (Next Sprint)
+## Completed Quick Wins
 
 1. ~~Docker Compose for one-command launch~~ ✅
 2. ~~24h traffic sparklines on device cards~~ ✅
-3. ~~Configurable alert threshold via env var (expose in UI)~~ ✅
+3. ~~Configurable alert threshold via UI~~ ✅
 4. ~~"New device joined" alert when unknown MAC appears~~ ✅
 5. ~~Process executable path column with copy button~~ ✅
+6. ~~Unified app (WiFiChecker + Spectra)~~ ✅
 
 ---
 

@@ -1,29 +1,17 @@
 {
-  "name": "wifichecker",
+  "name": "spectra",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
+  "version": "0.2.0",
+  "description": "Spectra — unified network health and LAN traffic intelligence",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "preview:pages": "VITE_BASE_PATH=/WiFiChecker/ npm run build && vite preview --base /WiFiChecker/",
-    "spectra:backend": "cd backend && python3 run.py",
-    "spectra:frontend": "cd frontend && npm run dev",
-    "spectra:install": "cd backend && pip install -r requirements.txt && cd ../frontend && npm install",
-    "spectra:build": "cd frontend && npm run build",
-    "spectra:docker": "docker compose up --build"
-  },
-  "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
-  },
-  "devDependencies": {
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.1",
-    "typescript": "~5.8.3",
-    "vite": "^6.3.5",
-    "vite-plugin-pwa": "^0.21.2"
+    "install:all": "cd backend && pip install -r requirements.txt && cd ../frontend && npm install",
+    "dev": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python3 run.py",
+    "dev:full": "echo 'Run in two terminals: npm run dev:backend && npm run dev'",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "preview:pages": "cd frontend && npm run preview:pages",
+    "docker": "docker compose up --build",
+    "docker:down": "docker compose down"
   }
 }

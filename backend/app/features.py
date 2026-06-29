@@ -2,6 +2,22 @@
 
 FEATURES = [
     {
+        "id": "client_health",
+        "symbol": "▲",
+        "title": "Client Health Checks",
+        "summary": "Connectivity, link quality, and latency probes — works in any browser without a backend.",
+        "how_it_works": (
+            "Uses the Network Information API and navigator.onLine for live connection status. "
+            "Latency probes measure round-trip time to Google, Cloudflare, and the app origin. "
+            "Installable as a PWA for quick health checks on phone, tablet, or desktop."
+        ),
+        "limitations": (
+            "Cannot read Wi-Fi SSID, signal strength, or scan nearby networks — browser sandbox limits. "
+            "Latency probes depend on third-party endpoints being reachable."
+        ),
+        "status": "active",
+    },
+    {
         "id": "greedy_devices",
         "symbol": "◈",
         "title": "Greedy Device Detection",
@@ -106,7 +122,7 @@ FEATURES = [
     },
     {
         "id": "rogue_ap",
-        "symbol": "▲",
+        "symbol": "◆",
         "title": "Rogue Access Point Detection",
         "summary": "Detects evil-twin APs and deauthentication attacks.",
         "how_it_works": (
