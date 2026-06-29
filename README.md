@@ -41,6 +41,7 @@ Open the printed local URL. For phone testing, deploy to Vercel/Netlify or tunne
 | `npm run dev` | Start Vite dev server |
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Serve the production build locally |
+| `npm run preview:pages` | Build and preview with the GitHub Pages base path (`/WiFiChecker/`) |
 
 ### Deploy (GitHub Pages)
 
@@ -52,12 +53,15 @@ This repo includes a [GitHub Actions workflow](.github/workflows/deploy.yml) tha
 
 The app will be available at **https://deacondp.github.io/WiFiChecker/**.
 
-Local production preview with the same base path:
+Local production preview with the same base path as GitHub Pages:
 
 ```bash
-VITE_BASE_PATH=/WiFiChecker/ npm run build
-npm run preview
+npm run preview:pages
 ```
+
+Then open **http://localhost:4173/WiFiChecker/** (paths match the live site).
+
+**First-time setup:** If deploy fails with *"Ensure GitHub Pages has been enabled"*, open [Settings → Pages](https://github.com/DeaconDP/WiFiChecker/settings/pages), set **Source** to **GitHub Actions**, then re-run the [Deploy workflow](https://github.com/DeaconDP/WiFiChecker/actions/workflows/deploy.yml) from the Actions tab.
 
 ---
 
