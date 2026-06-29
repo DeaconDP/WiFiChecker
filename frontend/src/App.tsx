@@ -7,14 +7,16 @@ import ProcessTable from "./components/ProcessTable";
 import AlertList from "./components/AlertList";
 import FeatureGrid from "./components/FeatureGrid";
 import RoadmapPage from "./pages/RoadmapPage";
+import SettingsPage from "./pages/SettingsPage";
 
-type Page = "dashboard" | "devices" | "processes" | "alerts" | "features" | "roadmap";
+type Page = "dashboard" | "devices" | "processes" | "alerts" | "features" | "roadmap" | "settings";
 
 const NAV: { id: Page; symbol: string; label: string }[] = [
   { id: "dashboard", symbol: "◈", label: "Dashboard" },
   { id: "devices", symbol: "◎", label: "Devices" },
   { id: "processes", symbol: "▣", label: "Processes" },
   { id: "alerts", symbol: "△", label: "Alerts" },
+  { id: "settings", symbol: "⚙", label: "Settings" },
   { id: "features", symbol: "◇", label: "Features" },
   { id: "roadmap", symbol: "▤", label: "Roadmap" },
 ];
@@ -33,7 +35,7 @@ const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
   processes: {
     title: "▣ PROCESS MONITOR",
     subtitle:
-      "Applications on this machine using network I/O. Hover for executable path. Requires local agent.",
+      "Applications on this machine using network I/O. Executable paths are shown with a copy button. Requires local agent.",
   },
   alerts: {
     title: "△ ALERT FEED",
@@ -49,6 +51,11 @@ const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
     title: "▤ ROADMAP & EPICS",
     subtitle:
       "Development epics, suggestions, and planned capabilities. This file is the living product backlog.",
+  },
+  settings: {
+    title: "⚙ SETTINGS",
+    subtitle:
+      "Tune alert sensitivity and view runtime configuration. Changes persist across restarts.",
   },
 };
 
@@ -165,6 +172,8 @@ export default function App() {
           )}
 
           {page === "features" && <FeatureGrid features={features} />}
+
+          {page === "settings" && <SettingsPage />}
 
           {page === "roadmap" && <RoadmapPage />}
         </main>

@@ -21,7 +21,6 @@
 
 ### Suggestions
 - Add **device grouping** (Kids, IoT, Work) for aggregate greed scores
-- Show **24h sparkline** per device from traffic_samples table
 - **Export CSV** of traffic history for offline analysis
 
 ---
@@ -39,7 +38,7 @@
 | ✅ Done | New destination alerts | First-seen remote hosts per process |
 | 🔲 Todo | Time-of-day baselines | Different thresholds for 3am vs 3pm |
 | 🔲 Todo | Beaconing detection | Fixed-interval connection regularity |
-| 🔲 Todo | Configurable sensitivity slider | User-tunable σ threshold |
+| ✅ Done | Configurable sensitivity slider | Settings page (1–5σ), persisted in SQLite |
 | 🔲 Todo | Alert suppression rules | "Ignore Windows Update" patterns |
 
 ### Suggestions
@@ -143,8 +142,8 @@
 | ✅ Done | FastAPI backend | REST + WebSocket |
 | ✅ Done | React + Vite frontend | Proxy to backend in dev |
 | ✅ Done | SQLite persistence | Traffic samples, alerts, devices |
-| 🔲 Todo | Environment-based config | `.env` for thresholds, intervals |
-| 🔲 Todo | Docker Compose (full stack) | Backend + frontend + optional gateway |
+| ✅ Done | Environment-based config | `.env` + `.env.example` for thresholds, intervals |
+| ✅ Done | Docker Compose (full stack) | `docker compose up` — backend + frontend |
 | 🔲 Todo | Authentication | Basic auth or OAuth for remote access |
 | 🔲 Todo | Data retention policy | Auto-prune samples older than N days |
 | 🔲 Todo | Health check + metrics | Prometheus `/metrics` endpoint |
@@ -158,11 +157,11 @@
 
 ## Quick Wins (Next Sprint)
 
-1. Docker Compose for one-command launch
-2. 24h traffic sparklines on device cards
-3. Configurable alert threshold via env var (already in backend, expose in UI)
-4. "New device joined" alert when unknown MAC appears
-5. Process executable path column with copy button
+1. ~~Docker Compose for one-command launch~~ ✅
+2. ~~24h traffic sparklines on device cards~~ ✅
+3. ~~Configurable alert threshold via env var (expose in UI)~~ ✅
+4. ~~"New device joined" alert when unknown MAC appears~~ ✅
+5. ~~Process executable path column with copy button~~ ✅
 
 ---
 

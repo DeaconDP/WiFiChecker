@@ -1,8 +1,13 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, Field
 
 from app.features import FEATURES
 
 router = APIRouter()
+
+
+class SettingsUpdate(BaseModel):
+    anomaly_sigma_threshold: float | None = Field(default=None, ge=1.0, le=5.0)
 
 
 def create_router(engine) -> APIRouter:
@@ -14,6 +19,22 @@ def create_router(engine) -> APIRouter:
     @router.get("/devices")
     async def get_devices():
         return engine.snapshot().get("devices", [])
+
+    @router.get("/devices/sparklines")
+    async def get_device_sparklines(hours: int = 24):
+        devices = engine.snapshot().get("devices", [])
+        ids = [d["id"] for d in devices]
+        sparklines = await engine.db.get_device_sparklines(ids, hours=hours)
+        return sparklines
+
+    @router.get("/settings")
+    async def get_settings():
+        return await engine.get_settings()
+
+    @router.patch("/settings")
+    async def update_settings(body: SettingsUpdate):
+        updates = body.model_dump(exclude_none=True)
+        return await engine.update_settings(updates)
 
     @router.get("/processes")
     async def get_processes():

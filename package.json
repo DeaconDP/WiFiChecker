@@ -11,7 +11,8 @@
     "spectra:backend": "cd backend && python3 run.py",
     "spectra:frontend": "cd frontend && npm run dev",
     "spectra:install": "cd backend && pip install -r requirements.txt && cd ../frontend && npm install",
-    "spectra:build": "cd frontend && npm run build"
+    "spectra:build": "cd frontend && npm run build",
+    "spectra:docker": "docker compose up --build"
   },
   "dependencies": {
     "react": "^19.1.0",

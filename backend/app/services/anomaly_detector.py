@@ -14,7 +14,8 @@ def _utcnow() -> str:
 
 
 class AnomalyDetector:
-    def __init__(self):
+    def __init__(self, sigma_threshold: float | None = None):
+        self.sigma_threshold = sigma_threshold or settings.anomaly_sigma_threshold
         self._rate_history: dict[str, list[float]] = {}
         self._seen_remotes: dict[str, set[str]] = {}
         self._alerted: set[str] = set()
@@ -45,9 +46,7 @@ class AnomalyDetector:
 
             mean = statistics.mean(history)
             stdev = statistics.stdev(history) if len(history) > 1 else 0.0
-            threshold = mean + settings.anomaly_sigma_threshold * max(
-                stdev, mean * 0.1
-            )
+            threshold = mean + self.sigma_threshold * max(stdev, mean * 0.1)
 
             if rate > threshold and rate > 50_000:  # > ~50 KB/s
                 alert_key = f"greedy:{d['id']}"
@@ -115,9 +114,7 @@ class AnomalyDetector:
 
             mean = statistics.mean(history)
             stdev = statistics.stdev(history) if len(history) > 1 else 0.0
-            threshold = mean + settings.anomaly_sigma_threshold * max(
-                stdev, mean * 0.1
-            )
+            threshold = mean + self.sigma_threshold * max(stdev, mean * 0.1)
 
             if rate > threshold and rate > 20_000:
                 alert_key = f"greedy_proc:{p['pid']}"
@@ -175,6 +172,36 @@ class AnomalyDetector:
                             )
                         )
 
+        return alerts
+
+    def check_new_devices(
+        self, devices: list[dict], seen_device_ids: set[str]
+    ) -> list[dict]:
+        alerts: list[dict] = []
+        for d in devices:
+            if d["id"] in seen_device_ids:
+                continue
+            alert_key = f"new_device:{d['id']}"
+            if alert_key in self._alerted:
+                continue
+            self._alerted.add(alert_key)
+            alerts.append(
+                self._make_alert(
+                    severity="info",
+                    category="new_device",
+                    title=f"◎ New device: {d['hostname']}",
+                    message=(
+                        f"{d['hostname']} ({d['ip']}, {d['mac']}) joined the network."
+                    ),
+                    explanation=(
+                        "A device with an unknown MAC address appeared on your LAN. "
+                        "This is normal when guests connect or you add new hardware — "
+                        "but unexpected devices may warrant investigation. "
+                        "Check the device vendor and hostname."
+                    ),
+                    device_id=d["id"],
+                )
+            )
         return alerts
 
     def _make_alert(
