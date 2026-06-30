@@ -36,6 +36,10 @@ class AnomalyDetector:
     def check_device_anomalies(self, devices: list[dict]) -> list[dict]:
         alerts: list[dict] = []
         for d in devices:
+            metering_source = d.get("metering_source", "unmetered")
+            if metering_source == "unmetered":
+                continue
+
             rate = d["rate_sent"] + d["rate_recv"]
             key = self._entity_key("device", d["id"])
             self.record_sample("device", d["id"], rate)
@@ -48,10 +52,20 @@ class AnomalyDetector:
             stdev = statistics.stdev(history) if len(history) > 1 else 0.0
             threshold = mean + self.sigma_threshold * max(stdev, mean * 0.1)
 
-            if rate > threshold and rate > 50_000:  # > ~50 KB/s
+            min_greed = 20.0 if metering_source == "conntrack" else 30.0
+            if (
+                rate > threshold
+                and rate > 50_000
+                and d["greed_score"] >= min_greed
+            ):  # > ~50 KB/s and meaningful LAN share
                 alert_key = f"greedy:{d['id']}"
                 if alert_key not in self._alerted:
                     self._alerted.add(alert_key)
+                    source_note = (
+                        "Measured via gateway conntrack."
+                        if metering_source == "conntrack"
+                        else "Measured on this host only."
+                    )
                     alerts.append(
                         self._make_alert(
                             severity="warning",
@@ -60,7 +74,8 @@ class AnomalyDetector:
                             message=(
                                 f"{d['hostname']} ({d['ip']}) is using "
                                 f"{self._fmt_rate(rate)} — "
-                                f"{d['greed_score']:.0f}% of observed traffic."
+                                f"{d['greed_score']:.0f}% of measured traffic. "
+                                f"{source_note}"
                             ),
                             explanation=(
                                 "This device is sending or receiving significantly "

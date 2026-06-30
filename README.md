@@ -119,7 +119,7 @@ See [docs/TODO.md](docs/TODO.md) for epics, suggestions, and the living product 
 
 ## Limitations (honest)
 
-- Per-device bandwidth on consumer setups is **approximate** without a dedicated gateway
+- Per-device bandwidth on consumer setups is **approximate** without a dedicated gateway — Spectra uses conntrack on gateways and local interface stats on this host; other LAN devices appear as **Unmetered**
 - **HTTPS content is not decrypted** — analysis uses metadata only
 - Browser health checks cannot read Wi‑Fi SSID or signal strength
 - Per-app visibility on phones requires platform-specific agents (planned)

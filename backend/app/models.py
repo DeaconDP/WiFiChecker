@@ -25,6 +25,7 @@ class Device(BaseModel):
     is_local_agent: bool = False
     last_seen: datetime
     greed_score: float = 0.0
+    metering_source: str = "unmetered"
 
 
 class ProcessTraffic(BaseModel):

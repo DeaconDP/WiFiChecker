@@ -8,6 +8,17 @@ interface Props {
   devices: Device[];
 }
 
+function meteringLabel(source: Device["metering_source"]): string {
+  switch (source) {
+    case "conntrack":
+      return "Gateway";
+    case "local_agent":
+      return "This host";
+    default:
+      return "Unmetered";
+  }
+}
+
 export default function DeviceTable({ devices }: Props) {
   const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
 
@@ -45,6 +56,7 @@ export default function DeviceTable({ devices }: Props) {
             <th>↑ Upload</th>
             <th>24h</th>
             <th>Conns</th>
+            <th>Meter</th>
             <th>Greed</th>
           </tr>
         </thead>
@@ -63,8 +75,26 @@ export default function DeviceTable({ devices }: Props) {
                 <Sparkline data={sparklines[d.id] ?? []} />
               </td>
               <td data-label="Conns">{d.connection_count}</td>
+              <td data-label="Meter">
+                <span
+                  className={`meter-badge ${d.metering_source ?? "unmetered"}`}
+                  title={
+                    d.metering_source === "conntrack"
+                      ? "Traffic measured via gateway conntrack"
+                      : d.metering_source === "local_agent"
+                        ? "Traffic measured on this host"
+                        : "Device visible on LAN but traffic not measurable from here"
+                  }
+                >
+                  {meteringLabel(d.metering_source ?? "unmetered")}
+                </span>
+              </td>
               <td data-label="Greed">
-                <GreedBar score={d.greed_score} />
+                {d.metering_source === "unmetered" ? (
+                  <span className="meter-badge unmetered">—</span>
+                ) : (
+                  <GreedBar score={d.greed_score} />
+                )}
               </td>
             </tr>
           ))}

@@ -24,14 +24,16 @@ FEATURES = [
         "summary": "Identifies which devices on your network consume the most bandwidth.",
         "how_it_works": (
             "Spectra scans your LAN via the ARP/neighbor table to discover devices, "
-            "then tracks bytes sent and received per device over time. Each device "
-            "gets a Greed Score — its share of total observed traffic. When a device's "
-            "usage spikes above its rolling baseline (2.5σ), an alert fires."
+            "then attributes traffic using real data sources: Linux conntrack on "
+            "gateways (per-IP NAT counters) or local interface stats for this host. "
+            "Each metered device gets a Greed Score — its share of measured traffic. "
+            "When usage spikes above its rolling baseline (2.5σ), an alert fires."
         ),
         "limitations": (
-            "Per-device attribution on consumer routers is approximate without dedicated "
-            "gateway hardware. Devices behind VPNs or using DoH hide destinations. "
-            "Mobile and IoT per-app visibility requires an agent on each device."
+            "Other LAN devices are listed but unmetered unless Spectra runs on a "
+            "gateway with conntrack visibility. Devices behind VPNs or using DoH "
+            "hide destinations. Mobile and IoT per-app visibility requires an "
+            "agent on each device."
         ),
         "status": "active",
     },

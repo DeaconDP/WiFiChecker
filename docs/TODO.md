@@ -33,7 +33,7 @@
 | ✅ Done | SQLite traffic history | Samples per device/process |
 | ✅ Done | 24h traffic sparklines | Per-device from `traffic_samples` |
 | ✅ Done | New device joined alerts | Unknown MAC detection |
-| 🔲 Todo | Accurate per-device metering via gateway | Requires iptables/nftables counters on bridge |
+| 🔲 Todo | Accurate per-device metering via gateway | Conntrack per-IP when gateway; local host otherwise |
 | 🔲 Todo | IPv6 device discovery | `ip -6 neigh` integration |
 | 🔲 Todo | Device naming persistence | Remember user-assigned labels |
 

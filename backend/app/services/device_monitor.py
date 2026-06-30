@@ -6,10 +6,17 @@ import hashlib
 import re
 import socket
 import subprocess
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 import psutil
+
+from app.services.conntrack_reader import (
+    ConntrackSnapshot,
+    is_lan_ip,
+    read_conntrack_snapshot,
+)
 
 # Common OUI prefixes for demo labeling
 VENDOR_OUI: dict[str, str] = {
@@ -40,12 +47,18 @@ def _make_id(mac: str) -> str:
     return hashlib.sha256(mac.encode()).hexdigest()[:12]
 
 
+def _local_mac() -> str:
+    node = uuid.getnode()
+    return ":".join(f"{(node >> shift) & 0xFF:02x}" for shift in range(40, -1, -8))
+
+
 class DeviceMonitor:
-    """Tracks LAN devices via ARP table and local interface stats."""
+    """Tracks LAN devices via ARP table and real traffic sources."""
 
     def __init__(self):
         self._prev_counters: dict[str, tuple[int, int, float]] = {}
         self._known_devices: dict[str, dict] = {}
+        self._conntrack_available = False
 
     def _read_arp_table(self) -> list[tuple[str, str]]:
         """Parse system ARP/neighbor table for IP + MAC pairs."""
@@ -91,18 +104,6 @@ class DeviceMonitor:
         except (socket.herror, socket.gaierror, OSError):
             return f"host-{ip.split('.')[-1]}"
 
-    def _seed_demo_devices(self) -> list[tuple[str, str]]:
-        """Seed plausible demo devices when ARP table is sparse."""
-        local_ip = self._local_ip()
-        base = ".".join(local_ip.split(".")[:3]) if local_ip else "192.168.1"
-        seeds = [
-            (f"{base}.10", "00:1a:2b:11:22:33"),
-            (f"{base}.20", "aa:bb:cc:44:55:66"),
-            (f"{base}.30", "de:ad:be:77:88:99"),
-            (f"{base}.40", "ca:fe:00:aa:bb:cc"),
-        ]
-        return seeds
-
     def _local_ip(self) -> Optional[str]:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -113,65 +114,107 @@ class DeviceMonitor:
         except OSError:
             return None
 
-    def _estimate_device_traffic(
-        self, mac: str, ip: str, now: float
-    ) -> tuple[int, int, float, float]:
-        """Estimate per-device traffic from connection distribution."""
+    def _local_interface_counters(self) -> tuple[int, int]:
         net = psutil.net_io_counters()
-        total_sent = net.bytes_sent if net else 0
-        total_recv = net.bytes_recv if net else 0
+        if not net:
+            return 0, 0
+        return net.bytes_sent, net.bytes_recv
 
-        device_count = max(len(self._known_devices), 1)
-        # Distribute with pseudo-random weight from MAC hash
-        weight = (int(mac.replace(":", ""), 16) % 40 + 10) / 100.0
-        sent = int(total_sent * weight / device_count)
-        recv = int(total_recv * weight / device_count)
+    def _local_connection_count(self, local_ip: str | None) -> int:
+        if not local_ip:
+            return 0
+        try:
+            connections = psutil.net_connections(kind="inet")
+        except (psutil.AccessDenied, PermissionError):
+            return 0
 
-        key = mac
+        count = 0
+        for conn in connections:
+            if conn.status != psutil.CONN_ESTABLISHED:
+                continue
+            if conn.laddr and conn.laddr.ip == local_ip:
+                count += 1
+        return count
+
+    def _rates_from_counters(
+        self, key: str, sent: int, recv: int, ts: float
+    ) -> tuple[float, float]:
         prev = self._prev_counters.get(key)
         rate_sent = rate_recv = 0.0
         if prev:
             ps, pr, pt = prev
-            dt = max(now - pt, 0.001)
+            dt = max(ts - pt, 0.001)
             rate_sent = _format_bytes_per_sec((sent - ps) / dt)
             rate_recv = _format_bytes_per_sec((recv - pr) / dt)
+        self._prev_counters[key] = (sent, recv, ts)
+        return rate_sent, rate_recv
 
-        self._prev_counters[key] = (sent, recv, now)
-        return sent, recv, rate_sent, rate_recv
+    def _metered_traffic(
+        self,
+        ip: str,
+        is_local_agent: bool,
+        conntrack: ConntrackSnapshot,
+        local_ip: str | None,
+        ts: float,
+    ) -> tuple[int, int, float, float, int, str]:
+        ct_stats = conntrack.by_ip.get(ip)
+        if ct_stats and (ct_stats.bytes_sent or ct_stats.bytes_recv):
+            rate_sent, rate_recv = self._rates_from_counters(
+                f"ct:{ip}", ct_stats.bytes_sent, ct_stats.bytes_recv, ts
+            )
+            return (
+                ct_stats.bytes_sent,
+                ct_stats.bytes_recv,
+                rate_sent,
+                rate_recv,
+                ct_stats.connection_count,
+                "conntrack",
+            )
+
+        if is_local_agent:
+            sent, recv = self._local_interface_counters()
+            rate_sent, rate_recv = self._rates_from_counters(
+                f"local:{ip}", sent, recv, ts
+            )
+            return (
+                sent,
+                recv,
+                rate_sent,
+                rate_recv,
+                self._local_connection_count(local_ip),
+                "local_agent",
+            )
+
+        return 0, 0, 0.0, 0.0, 0, "unmetered"
 
     def scan(self) -> list[dict]:
         now = _utcnow()
         ts = now.timestamp()
         arp_entries = self._read_arp_table()
-
-        if len(arp_entries) < 2:
-            arp_entries = self._seed_demo_devices()
-
-        # Always include local machine
         local_ip = self._local_ip()
-        if local_ip:
-            local_mac = "52:54:00:00:00:01"
-            if not any(ip == local_ip for ip, _ in arp_entries):
-                arp_entries.insert(0, (local_ip, local_mac))
+        local_mac = _local_mac()
+
+        if local_ip and not any(ip == local_ip for ip, _ in arp_entries):
+            arp_entries.insert(0, (local_ip, local_mac))
+
+        conntrack = read_conntrack_snapshot()
+        self._conntrack_available = conntrack.entry_count > 0
 
         devices: list[dict] = []
-        total_rate = 0.0
+        metered_rate_total = 0.0
 
         for ip, mac in arp_entries:
             device_id = _make_id(mac)
             hostname = self._resolve_hostname(ip)
-            sent, recv, rate_sent, rate_recv = self._estimate_device_traffic(
-                mac, ip, ts
-            )
-            total_rate += rate_sent + rate_recv
+            is_local = ip == local_ip
 
-            conns = sum(
-                1
-                for c in psutil.net_connections(kind="inet")
-                if c.raddr and c.raddr.ip
+            sent, recv, rate_sent, rate_recv, conn_count, metering_source = (
+                self._metered_traffic(ip, is_local, conntrack, local_ip, ts)
             )
-            # Scale connections per device
-            conn_count = max(1, conns // max(len(arp_entries), 1))
+
+            if metering_source == "unmetered" and is_lan_ip(ip, local_ip):
+                # Keep inventory visible even when bytes cannot be measured yet.
+                conn_count = 0
 
             device = {
                 "id": device_id,
@@ -184,20 +227,27 @@ class DeviceMonitor:
                 "rate_sent": rate_sent,
                 "rate_recv": rate_recv,
                 "connection_count": conn_count,
-                "is_local_agent": ip == local_ip,
+                "is_local_agent": is_local,
+                "metering_source": metering_source,
                 "last_seen": now.isoformat(),
                 "greed_score": 0.0,
             }
             self._known_devices[device_id] = device
             devices.append(device)
 
-        # Compute greed scores relative to total
+            if metering_source != "unmetered":
+                metered_rate_total += rate_sent + rate_recv
+
         for d in devices:
+            if d["metering_source"] == "unmetered":
+                continue
             device_rate = d["rate_sent"] + d["rate_recv"]
-            if total_rate > 0:
+            if metered_rate_total > 0:
                 d["greed_score"] = round(
-                    min(100.0, (device_rate / total_rate) * 100), 1
+                    min(100.0, (device_rate / metered_rate_total) * 100), 1
                 )
 
-        devices.sort(key=lambda x: x["greed_score"], reverse=True)
+        devices.sort(
+            key=lambda x: (x["metering_source"] == "unmetered", -x["greed_score"])
+        )
         return devices
