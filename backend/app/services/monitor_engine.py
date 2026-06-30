@@ -120,13 +120,23 @@ class MonitorEngine:
         alerts = await self.db.list_alerts(50)
         monitoring_since = await self.db.get_meta("monitoring_since")
 
-        total_rate_sent = sum(d["rate_sent"] for d in device_list)
-        total_rate_recv = sum(d["rate_recv"] for d in device_list)
+        total_rate_sent = sum(
+            d["rate_sent"] for d in device_list if d.get("metering_source") != "unmetered"
+        )
+        total_rate_recv = sum(
+            d["rate_recv"] for d in device_list if d.get("metering_source") != "unmetered"
+        )
         critical = sum(1 for a in alerts if a["severity"] == "critical")
+        metered = sum(
+            1
+            for d in device_list
+            if d.get("metering_source") != "unmetered"
+            and (d["rate_sent"] + d["rate_recv"]) > 0
+        )
 
         summary = {
             "total_devices": len(device_list),
-            "active_devices": len(device_list),
+            "active_devices": metered or len(device_list),
             "total_rate_sent": round(total_rate_sent, 2),
             "total_rate_recv": round(total_rate_recv, 2),
             "alert_count": len(alerts),

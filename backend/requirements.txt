@@ -5,3 +5,4 @@ aiosqlite>=0.20.0
 pydantic>=2.9.0
 pydantic-settings>=2.6.0
 websockets>=13.0
+pytest>=8.0.0

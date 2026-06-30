@@ -12,6 +12,7 @@ export interface Device {
   is_local_agent: boolean;
   last_seen: string;
   greed_score: number;
+  metering_source: "conntrack" | "local_agent" | "unmetered";
 }
 
 export interface ProcessTraffic {
