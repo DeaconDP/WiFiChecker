@@ -170,13 +170,9 @@ export default function App() {
                   </div>
                   <div className="panel-body">
                     <p className="insight-text">
-                      Client health is active. Start the backend for greedy device detection,
-                      process monitoring, and anomaly alerts:
-                    </p>
-                    <pre className="insight-code">docker compose up</pre>
-                    <p className="insight-text">
-                      Or open the <button className="link-btn" onClick={() => setPage("health")}>▲ Health</button> page
-                      for full latency testing and PWA install.
+                      Client health is active. Double-click <strong>Spectra</strong> in the
+                      project folder (or run <code>launch.py</code>) to start LAN monitoring
+                      with greedy device detection, process monitoring, and anomaly alerts.
                     </p>
                   </div>
                 </div>

@@ -5,13 +5,15 @@
   "description": "Spectra — unified network health and LAN traffic intelligence",
   "scripts": {
     "install:all": "cd backend && pip install -r requirements.txt && cd ../frontend && npm install",
+    "start": "python3 launch.py",
     "dev": "cd frontend && npm run dev",
     "dev:backend": "cd backend && python3 run.py",
-    "dev:full": "echo 'Run in two terminals: npm run dev:backend && npm run dev'",
+    "dev:full": "npx concurrently -k -n backend,frontend -c cyan,magenta \"npm run dev:backend\" \"npm run dev\"",
     "build": "cd frontend && npm run build",
     "preview": "cd frontend && npm run preview",
-    "preview:pages": "cd frontend && npm run preview:pages",
-    "docker": "docker compose up --build",
-    "docker:down": "docker compose down"
+    "preview:pages": "cd frontend && npm run preview:pages"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }

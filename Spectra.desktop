@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Spectra
+Comment=Network Traffic Intelligence
+Exec=bash -c "cd \"$(dirname \"$(realpath \"%k\")\")\" && python3 launch.py"
+Icon=frontend/public/favicon.svg
+Terminal=true
+Categories=Network;Monitor;
