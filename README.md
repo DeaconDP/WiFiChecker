@@ -16,27 +16,36 @@
 
 ## Quick start
 
-**One command (Docker):**
+**Double-click to run (no terminal, no Docker):**
 
-```bash
-docker compose up --build
-```
+| Platform | What to open |
+|----------|--------------|
+| **Windows** | `Spectra.vbs` (silent) or `Spectra.bat` |
+| **macOS** | `Spectra.command` |
+| **Linux** | `Spectra` or `launch.py` |
 
-Open **http://localhost:5173** — full LAN monitoring with live dashboard.
+On first launch, Spectra installs Python packages and builds the UI automatically. Your browser opens to **http://127.0.0.1:8000** with the full dashboard.
 
-**Local development:**
+**Requirements (one-time):** [Python 3.11+](https://python.org) and [Node.js](https://nodejs.org) (Node is only needed for the first-run UI build).
+
+---
+
+## Development
+
+For local development with hot reload:
 
 ```bash
 npm run install:all
-
-# Terminal 1 — backend API (port 8000)
-npm run dev:backend
-
-# Terminal 2 — unified UI (port 5173)
-npm run dev
+npm run dev:full
 ```
 
-The **▲ Health** page works without the backend — useful for quick connectivity checks or GitHub Pages.
+Open **http://localhost:5173** — the Vite dev server proxies API calls to the backend on port 8000.
+
+Or run the production-style launcher:
+
+```bash
+npm start
+```
 
 ---
 
@@ -67,6 +76,8 @@ Copy `.env.example` to `.env` or set environment variables (prefix `SPECTRA_`):
 | `SPECTRA_ANOMALY_SIGMA_THRESHOLD` | `2.5` | Standard deviations for alerts |
 | `SPECTRA_BASELINE_DAYS` | `7` | Baseline learning window |
 | `SPECTRA_DATABASE_PATH` | `data/spectra.db` | SQLite database path |
+| `SPECTRA_HOST` | `127.0.0.1` | Server bind address |
+| `SPECTRA_PORT` | `8000` | Server port |
 
 ---
 
@@ -90,11 +101,13 @@ DeviceMonitor ProcessMonitor AnomalyDetector
 (ARP scan)    (psutil)       (z-score)
 ```
 
+When launched via `launch.py`, the backend serves the built UI on a single port — no separate frontend server required.
+
 ---
 
 ## Deploy (GitHub Pages)
 
-The unified app builds to a static PWA. The **▲ Health** page works fully offline; LAN features need a local or remote Spectra backend.
+The unified app builds to a static PWA. The **▲ Health** page works fully offline; LAN features need a local Spectra instance (double-click `Spectra` / `launch.py`).
 
 **One-time setup:**
 
@@ -102,12 +115,6 @@ The unified app builds to a static PWA. The **▲ Health** page works fully offl
 2. Set **Source** to **Deploy from a branch** → **`gh-pages`** → **`/ (root)`**.
 
 Live at **https://deacondp.github.io/WiFiChecker/** after the next push to `main`.
-
-Local preview with the same base path:
-
-```bash
-npm run preview:pages
-```
 
 ---
 
