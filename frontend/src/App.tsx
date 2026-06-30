@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { FeatureInfo, LivePayload } from "./types";
 import { connectWebSocket, fetchFeatures } from "./api";
 import { HealthSummary } from "./components/HealthCards";
@@ -11,73 +12,84 @@ import RoadmapPage from "./pages/RoadmapPage";
 import SettingsPage from "./pages/SettingsPage";
 import HealthPage from "./pages/HealthPage";
 import { useConnectivity } from "./hooks/useConnectivity";
+import { NAV, PAGE_INFO, pageFromPath } from "./routes";
 
-type Page =
-  | "dashboard"
-  | "health"
-  | "devices"
-  | "processes"
-  | "alerts"
-  | "features"
-  | "roadmap"
-  | "settings";
+function PageHeader() {
+  const { pathname } = useLocation();
+  const page = pageFromPath(pathname);
+  const info = PAGE_INFO[page];
 
-const NAV: { id: Page; symbol: string; label: string }[] = [
-  { id: "dashboard", symbol: "◈", label: "Dashboard" },
-  { id: "health", symbol: "▲", label: "Health" },
-  { id: "devices", symbol: "◎", label: "Devices" },
-  { id: "processes", symbol: "▣", label: "Processes" },
-  { id: "alerts", symbol: "△", label: "Alerts" },
-  { id: "settings", symbol: "⚙", label: "Settings" },
-  { id: "features", symbol: "◇", label: "Features" },
-  { id: "roadmap", symbol: "▤", label: "Roadmap" },
-];
+  return (
+    <>
+      <h1 className="page-title">{info.title}</h1>
+      <p className="page-subtitle">{info.subtitle}</p>
+    </>
+  );
+}
 
-const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
-  dashboard: {
-    title: "◈ NETWORK OVERVIEW",
-    subtitle:
-      "Unified snapshot — client connection health, LAN bandwidth, process activity, and active alerts.",
-  },
-  health: {
-    title: "▲ CLIENT HEALTH",
-    subtitle:
-      "Connectivity, link quality, and latency probes. Works in the browser without a backend — installable as a PWA.",
-  },
-  devices: {
-    title: "◎ DEVICE MONITOR",
-    subtitle:
-      "Every device on your network ranked by bandwidth consumption. High Greed Scores indicate bandwidth hogs.",
-  },
-  processes: {
-    title: "▣ PROCESS MONITOR",
-    subtitle:
-      "Applications on this machine using network I/O. Executable paths are shown with a copy button. Requires local agent.",
-  },
-  alerts: {
-    title: "△ ALERT FEED",
-    subtitle:
-      "Anomalies, greedy actors, and suspicious patterns. Each alert explains why it fired and what to check.",
-  },
-  features: {
-    title: "◇ FEATURE GUIDE",
-    subtitle:
-      "What Spectra can do today, what's partial, and what's planned. No black boxes — every feature is explained.",
-  },
-  roadmap: {
-    title: "▤ ROADMAP & EPICS",
-    subtitle:
-      "Development epics, suggestions, and planned capabilities. This file is the living product backlog.",
-  },
-  settings: {
-    title: "⚙ SETTINGS",
-    subtitle:
-      "Tune alert sensitivity and view runtime configuration. Changes persist across restarts.",
-  },
-};
+function DashboardPage({
+  connected,
+  connectivity,
+  data,
+  onRefresh,
+}: {
+  connected: boolean;
+  connectivity: ReturnType<typeof useConnectivity>;
+  data: LivePayload | null;
+  onRefresh: () => void;
+}) {
+  return (
+    <>
+      <HealthSummary connectivity={connectivity} backendLive={connected} />
+      {connected ? (
+        <>
+          <SummaryCards summary={data?.summary ?? null} />
+          <div className="panel">
+            <div className="panel-header">
+              <span className="panel-title">◎ TOP DEVICES BY GREED</span>
+            </div>
+            <div className="panel-body">
+              <DeviceTable devices={(data?.devices ?? []).slice(0, 5)} />
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-header">
+              <span className="panel-title">△ RECENT ALERTS</span>
+            </div>
+            <div className="panel-body" style={{ padding: "1rem" }}>
+              <AlertList
+                alerts={(data?.alerts ?? []).slice(0, 3)}
+                onAcknowledge={onRefresh}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="panel insight-panel">
+          <div className="panel-header">
+            <span className="panel-title">◈ START LAN MONITORING</span>
+          </div>
+          <div className="panel-body">
+            <p className="insight-text">
+              Client health is active. Start the backend for greedy device detection,
+              process monitoring, and anomaly alerts:
+            </p>
+            <pre className="insight-code">docker compose up</pre>
+            <p className="insight-text">
+              Or open the{" "}
+              <NavLink className="link-btn" to="/health">
+                ▲ Health
+              </NavLink>{" "}
+              page for full latency testing and PWA install.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function App() {
-  const [page, setPage] = useState<Page>("dashboard");
   const [connected, setConnected] = useState(false);
   const [data, setData] = useState<LivePayload | null>(null);
   const [features, setFeatures] = useState<FeatureInfo[]>([]);
@@ -96,7 +108,7 @@ export default function App() {
     return disconnect;
   }, [refreshKey]);
 
-  const info = PAGE_INFO[page];
+  const handleRefresh = () => setRefreshKey((k) => k + 1);
 
   return (
     <div className="app-shell">
@@ -122,108 +134,78 @@ export default function App() {
       <div className="app-body">
         <nav className="sidebar" aria-label="Main navigation">
           {NAV.map((n) => (
-            <button
+            <NavLink
               key={n.id}
-              className={`nav-item ${page === n.id ? "active" : ""}`}
-              onClick={() => setPage(n.id)}
+              to={n.path}
+              end={n.path === "/"}
+              className={({ isActive }) => `nav-item${isActive ? " active" : ""}`}
             >
               <span className="nav-symbol">{n.symbol}</span>
               {n.label}
-            </button>
+            </NavLink>
           ))}
         </nav>
 
         <main className="main-content">
-          <h1 className="page-title">{info.title}</h1>
-          <p className="page-subtitle">{info.subtitle}</p>
+          <PageHeader />
 
-          {page === "dashboard" && (
-            <>
-              <HealthSummary connectivity={connectivity} backendLive={connected} />
-              {connected ? (
-                <>
-                  <SummaryCards summary={data?.summary ?? null} />
-                  <div className="panel">
-                    <div className="panel-header">
-                      <span className="panel-title">◎ TOP DEVICES BY GREED</span>
-                    </div>
-                    <div className="panel-body">
-                      <DeviceTable devices={(data?.devices ?? []).slice(0, 5)} />
-                    </div>
-                  </div>
-                  <div className="panel">
-                    <div className="panel-header">
-                      <span className="panel-title">△ RECENT ALERTS</span>
-                    </div>
-                    <div className="panel-body" style={{ padding: "1rem" }}>
-                      <AlertList
-                        alerts={(data?.alerts ?? []).slice(0, 3)}
-                        onAcknowledge={() => setRefreshKey((k) => k + 1)}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="panel insight-panel">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <DashboardPage
+                  connected={connected}
+                  connectivity={connectivity}
+                  data={data}
+                  onRefresh={handleRefresh}
+                />
+              }
+            />
+            <Route path="/health" element={<HealthPage backendLive={connected} />} />
+            <Route
+              path="/devices"
+              element={
+                <div className="panel">
                   <div className="panel-header">
-                    <span className="panel-title">◈ START LAN MONITORING</span>
+                    <span className="panel-title">
+                      ◎ ALL DEVICES — {data?.devices.length ?? 0} FOUND
+                    </span>
                   </div>
                   <div className="panel-body">
-                    <p className="insight-text">
-                      Client health is active. Start the backend for greedy device detection,
-                      process monitoring, and anomaly alerts:
-                    </p>
-                    <pre className="insight-code">docker compose up</pre>
-                    <p className="insight-text">
-                      Or open the <button className="link-btn" onClick={() => setPage("health")}>▲ Health</button> page
-                      for full latency testing and PWA install.
-                    </p>
+                    <DeviceTable devices={data?.devices ?? []} />
                   </div>
                 </div>
-              )}
-            </>
-          )}
-
-          {page === "health" && <HealthPage backendLive={connected} />}
-
-          {page === "devices" && (
-            <div className="panel">
-              <div className="panel-header">
-                <span className="panel-title">
-                  ◎ ALL DEVICES — {data?.devices.length ?? 0} FOUND
-                </span>
-              </div>
-              <div className="panel-body">
-                <DeviceTable devices={data?.devices ?? []} />
-              </div>
-            </div>
-          )}
-
-          {page === "processes" && (
-            <div className="panel">
-              <div className="panel-header">
-                <span className="panel-title">
-                  ▣ LOCAL PROCESSES — {data?.processes.length ?? 0} ACTIVE
-                </span>
-              </div>
-              <div className="panel-body">
-                <ProcessTable processes={data?.processes ?? []} />
-              </div>
-            </div>
-          )}
-
-          {page === "alerts" && (
-            <AlertList
-              alerts={data?.alerts ?? []}
-              onAcknowledge={() => setRefreshKey((k) => k + 1)}
+              }
             />
-          )}
-
-          {page === "features" && <FeatureGrid features={features} />}
-
-          {page === "settings" && <SettingsPage />}
-
-          {page === "roadmap" && <RoadmapPage />}
+            <Route
+              path="/processes"
+              element={
+                <div className="panel">
+                  <div className="panel-header">
+                    <span className="panel-title">
+                      ▣ LOCAL PROCESSES — {data?.processes.length ?? 0} ACTIVE
+                    </span>
+                  </div>
+                  <div className="panel-body">
+                    <ProcessTable processes={data?.processes ?? []} />
+                  </div>
+                </div>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <AlertList
+                  alerts={data?.alerts ?? []}
+                  onAcknowledge={handleRefresh}
+                />
+              }
+            />
+            <Route path="/features" element={<FeatureGrid features={features} />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </main>
       </div>
     </div>

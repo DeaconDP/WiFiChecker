@@ -37,6 +37,6 @@ app.add_middleware(
 app.include_router(create_router(engine), prefix="/api")
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health():
     return {"status": "ok", "app": settings.app_name}
