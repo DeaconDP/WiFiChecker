@@ -1,4 +1,12 @@
 import { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import type { FeatureInfo, LivePayload } from "./types";
 import { connectWebSocket, fetchFeatures } from "./api";
 import { HealthSummary } from "./components/HealthCards";
@@ -22,15 +30,15 @@ type Page =
   | "roadmap"
   | "settings";
 
-const NAV: { id: Page; symbol: string; label: string }[] = [
-  { id: "dashboard", symbol: "◈", label: "Dashboard" },
-  { id: "health", symbol: "▲", label: "Health" },
-  { id: "devices", symbol: "◎", label: "Devices" },
-  { id: "processes", symbol: "▣", label: "Processes" },
-  { id: "alerts", symbol: "△", label: "Alerts" },
-  { id: "settings", symbol: "⚙", label: "Settings" },
-  { id: "features", symbol: "◇", label: "Features" },
-  { id: "roadmap", symbol: "▤", label: "Roadmap" },
+const NAV: { id: Page; path: string; symbol: string; label: string }[] = [
+  { id: "dashboard", path: "/", symbol: "◈", label: "Dashboard" },
+  { id: "health", path: "/health", symbol: "▲", label: "Health" },
+  { id: "devices", path: "/devices", symbol: "◎", label: "Devices" },
+  { id: "processes", path: "/processes", symbol: "▣", label: "Processes" },
+  { id: "alerts", path: "/alerts", symbol: "△", label: "Alerts" },
+  { id: "settings", path: "/settings", symbol: "⚙", label: "Settings" },
+  { id: "features", path: "/features", symbol: "◇", label: "Features" },
+  { id: "roadmap", path: "/roadmap", symbol: "▤", label: "Roadmap" },
 ];
 
 const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
@@ -76,8 +84,26 @@ const PAGE_INFO: Record<Page, { title: string; subtitle: string }> = {
   },
 };
 
-export default function App() {
-  const [page, setPage] = useState<Page>("dashboard");
+const ROUTER_BASENAME = import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
+
+function pageFromPath(pathname: string): Page {
+  const normalized =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
+  return NAV.find((n) => n.path === normalized)?.id ?? "dashboard";
+}
+
+function isNavActive(path: string, pathname: string): boolean {
+  if (path === "/") {
+    return pathname === "/" || pathname === "";
+  }
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
+function AppShell() {
+  const location = useLocation();
+  const page = pageFromPath(location.pathname);
   const [connected, setConnected] = useState(false);
   const [data, setData] = useState<LivePayload | null>(null);
   const [features, setFeatures] = useState<FeatureInfo[]>([]);
@@ -122,14 +148,14 @@ export default function App() {
       <div className="app-body">
         <nav className="sidebar" aria-label="Main navigation">
           {NAV.map((n) => (
-            <button
+            <Link
               key={n.id}
-              className={`nav-item ${page === n.id ? "active" : ""}`}
-              onClick={() => setPage(n.id)}
+              to={n.path}
+              className={`nav-item ${isNavActive(n.path, location.pathname) ? "active" : ""}`}
             >
               <span className="nav-symbol">{n.symbol}</span>
               {n.label}
-            </button>
+            </Link>
           ))}
         </nav>
 
@@ -137,95 +163,114 @@ export default function App() {
           <h1 className="page-title">{info.title}</h1>
           <p className="page-subtitle">{info.subtitle}</p>
 
-          {page === "dashboard" && (
-            <>
-              <HealthSummary connectivity={connectivity} backendLive={connected} />
-              {connected ? (
+          <Routes>
+            <Route
+              path="/"
+              element={
                 <>
-                  <SummaryCards summary={data?.summary ?? null} />
-                  <div className="panel">
-                    <div className="panel-header">
-                      <span className="panel-title">◎ TOP DEVICES BY GREED</span>
+                  <HealthSummary connectivity={connectivity} backendLive={connected} />
+                  {connected ? (
+                    <>
+                      <SummaryCards summary={data?.summary ?? null} />
+                      <div className="panel">
+                        <div className="panel-header">
+                          <span className="panel-title">◎ TOP DEVICES BY GREED</span>
+                        </div>
+                        <div className="panel-body">
+                          <DeviceTable devices={(data?.devices ?? []).slice(0, 5)} />
+                        </div>
+                      </div>
+                      <div className="panel">
+                        <div className="panel-header">
+                          <span className="panel-title">△ RECENT ALERTS</span>
+                        </div>
+                        <div className="panel-body" style={{ padding: "1rem" }}>
+                          <AlertList
+                            alerts={(data?.alerts ?? []).slice(0, 3)}
+                            onAcknowledge={() => setRefreshKey((k) => k + 1)}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="panel insight-panel">
+                      <div className="panel-header">
+                        <span className="panel-title">◈ START LAN MONITORING</span>
+                      </div>
+                      <div className="panel-body">
+                        <p className="insight-text">
+                          Client health is active. Start the backend for greedy device detection,
+                          process monitoring, and anomaly alerts:
+                        </p>
+                        <pre className="insight-code">docker compose up</pre>
+                        <p className="insight-text">
+                          Or open the{" "}
+                          <Link className="link-btn" to="/health">
+                            ▲ Health
+                          </Link>{" "}
+                          page for full latency testing and PWA install.
+                        </p>
+                      </div>
                     </div>
-                    <div className="panel-body">
-                      <DeviceTable devices={(data?.devices ?? []).slice(0, 5)} />
-                    </div>
-                  </div>
-                  <div className="panel">
-                    <div className="panel-header">
-                      <span className="panel-title">△ RECENT ALERTS</span>
-                    </div>
-                    <div className="panel-body" style={{ padding: "1rem" }}>
-                      <AlertList
-                        alerts={(data?.alerts ?? []).slice(0, 3)}
-                        onAcknowledge={() => setRefreshKey((k) => k + 1)}
-                      />
-                    </div>
-                  </div>
+                  )}
                 </>
-              ) : (
-                <div className="panel insight-panel">
+              }
+            />
+            <Route path="/health" element={<HealthPage backendLive={connected} />} />
+            <Route
+              path="/devices"
+              element={
+                <div className="panel">
                   <div className="panel-header">
-                    <span className="panel-title">◈ START LAN MONITORING</span>
+                    <span className="panel-title">
+                      ◎ ALL DEVICES — {data?.devices.length ?? 0} FOUND
+                    </span>
                   </div>
                   <div className="panel-body">
-                    <p className="insight-text">
-                      Client health is active. Start the backend for greedy device detection,
-                      process monitoring, and anomaly alerts:
-                    </p>
-                    <pre className="insight-code">docker compose up</pre>
-                    <p className="insight-text">
-                      Or open the <button className="link-btn" onClick={() => setPage("health")}>▲ Health</button> page
-                      for full latency testing and PWA install.
-                    </p>
+                    <DeviceTable devices={data?.devices ?? []} />
                   </div>
                 </div>
-              )}
-            </>
-          )}
-
-          {page === "health" && <HealthPage backendLive={connected} />}
-
-          {page === "devices" && (
-            <div className="panel">
-              <div className="panel-header">
-                <span className="panel-title">
-                  ◎ ALL DEVICES — {data?.devices.length ?? 0} FOUND
-                </span>
-              </div>
-              <div className="panel-body">
-                <DeviceTable devices={data?.devices ?? []} />
-              </div>
-            </div>
-          )}
-
-          {page === "processes" && (
-            <div className="panel">
-              <div className="panel-header">
-                <span className="panel-title">
-                  ▣ LOCAL PROCESSES — {data?.processes.length ?? 0} ACTIVE
-                </span>
-              </div>
-              <div className="panel-body">
-                <ProcessTable processes={data?.processes ?? []} />
-              </div>
-            </div>
-          )}
-
-          {page === "alerts" && (
-            <AlertList
-              alerts={data?.alerts ?? []}
-              onAcknowledge={() => setRefreshKey((k) => k + 1)}
+              }
             />
-          )}
-
-          {page === "features" && <FeatureGrid features={features} />}
-
-          {page === "settings" && <SettingsPage />}
-
-          {page === "roadmap" && <RoadmapPage />}
+            <Route
+              path="/processes"
+              element={
+                <div className="panel">
+                  <div className="panel-header">
+                    <span className="panel-title">
+                      ▣ LOCAL PROCESSES — {data?.processes.length ?? 0} ACTIVE
+                    </span>
+                  </div>
+                  <div className="panel-body">
+                    <ProcessTable processes={data?.processes ?? []} />
+                  </div>
+                </div>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <AlertList
+                  alerts={data?.alerts ?? []}
+                  onAcknowledge={() => setRefreshKey((k) => k + 1)}
+                />
+              }
+            />
+            <Route path="/features" element={<FeatureGrid features={features} />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </main>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter basename={ROUTER_BASENAME}>
+      <AppShell />
+    </BrowserRouter>
   );
 }

@@ -177,6 +177,7 @@ body::after {
   font-family: var(--font-mono);
   font-size: 0.85rem;
   text-align: left;
+  text-decoration: none;
   transition: all 0.15s;
   border-left: 2px solid transparent;
 }
@@ -856,6 +857,7 @@ body::after {
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
+  display: inline;
 }
 
 /* ── Responsive ── */
