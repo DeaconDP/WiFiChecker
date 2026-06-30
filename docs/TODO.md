@@ -15,7 +15,7 @@
 | ✅ Done | Single Docker Compose launch | `docker compose up` |
 | ✅ Done | PWA install for health checks | Works on GitHub Pages without backend |
 | ✅ Done | Consolidated repo structure | One frontend, one backend, root orchestrator |
-| 🔲 Todo | URL routing (deep links) | `/health`, `/devices`, etc. |
+| ✅ Done | URL routing (deep links) | `/health`, `/devices`, etc. |
 | 🔲 Todo | Mobile bottom nav | Swipeable cards on small screens |
 
 ---
